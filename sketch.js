@@ -1,14 +1,27 @@
 /****************** Global variables *****************/
 
+const CM_NONE   = 0,
+	  CM_INDIV  = 1,
+	  CM_SINGLE = 2;
+
+var COL_BLACK;
+
 var canvas, center;
 
-var tree, branches, angles,
-	time   = { h: 0, m: 0, s: 0 };
-	sizes  = [100, 180, 200],
-	colors = ["#FF0000", "#66FF00", "#0066FF"];
-	shrink = 0.6,
-	minLen = 5,
-	clockRadius = 250;
+var tree, angles, time = { h: 0, m: 0, s: 0 };
+
+var sizes  = [100, 180, 200],
+	colors = ["#FF0000", "#66FF00", "#0066FF"],
+	clockRadius = 250,
+	showClock   = true;
+
+var shrink   = 0.67,
+	minLen   = 10,
+	branches = 1,
+	colorMod = CM_INDIV;
+
+var ctrl, gui,
+	btnColorMode, btnShowClock;
 
 /************************* p5 ************************/
 
@@ -16,16 +29,22 @@ function setup() {
 
 	canvas = createCanvas(800, 800);
 	center = createVector(width/2, height/2);
-	initTree();
-	frameRate(5);
 
+	initTree();
+	initGUI();
+	initColors();
+
+	frameRate(2);
+	
 }
 
 function draw() {
 
 	background(255);
 
-	drawClock();
+	if (showClock)
+		drawClock();
+
 	setClockTime();
 	updateAngles();
 
@@ -33,7 +52,7 @@ function draw() {
 	for (let i = 0; i < tree.length; i++) {
 		push();
 			rotate(angles[i]);
-			branch(i, sizes[i], colors[i]);
+			branch(i, sizes[i], getColor(i));
 		pop();
 	}
 }
@@ -47,20 +66,20 @@ function initTree() {
 }
 
 function branch(index, len, col) {
-	
-	stroke(color(col));
+
+	stroke(col);
 	noFill();
 	strokeWeight(len / 50);
 
 	line(0, 0, 0, -len);
-	if (len > minLen) {
+	if ((len > minLen) && (index > (tree.length - 1 - branches))) {
 		push();
 			translate(0, -len);
 			for (let i = 0; i < angles.length; i++) {
 				let a = angles[i];
 				push();
 					rotate(a);
-					branch(index, len * shrink, colors[i]);
+					branch(index, len * shrink, getColor(i), alpha * 0.95);
 				pop();
 			}
 		pop();
@@ -69,26 +88,30 @@ function branch(index, len, col) {
 
 /************************ Clock **********************/
 
+function polar(rad, phi) { return createVector(rad * cos(phi), rad * sin(phi)); }
+
 function drawClock() {
 
 	let divis = 12;
 	translate(width / 2, height / 2);
 
-	// Circle
-	stroke(0);
-	strokeWeight(2);
-	noFill();
-	ellipse(0, 0, clockRadius * 2);
-
 	// Divisions
 	noStroke();
 	fill(0);
+	textSize(20);
+	textAlign(CENTER);
 	for (let h = 0; h <= divis; h++) {
 		let a = h * (TWO_PI / divis);
-		let x = clockRadius * cos(a);
-		let y = clockRadius * sin(a);
-		let c = createVector(x, y);
+		for (let i = 1; i < 5; i++) {
+			let sub = polar(clockRadius, a + i * (TWO_PI / 60));
+			ellipse(sub.x, sub.y, 5);
+		}
+		let c = polar(clockRadius, a);
 		ellipse(c.x, c.y, 10);
+		if (h < 12) {
+			let textPos = polar(clockRadius - 30, a - HALF_PI);
+			text(h, textPos.x, textPos.y);
+		}
 	}
 
 	translate(-center.x, -center.y);
@@ -111,5 +134,24 @@ function updateAngles() {
 		let ref = (tree[i].getDir().x > 0) ? 0 : 1;
 		let off = (ref == 1) ? PI : 0;
 		angles.push(p5.Vector.sub(tree[i].p2, center).angleBetween(refs[ref]) + off);
+	}
+}
+
+function initColors() {
+	COL_BLACK = color(0);
+	for (let c = 0; c < colors.length; c++)
+		colors[c] = color(colors[c]);
+}
+
+function getColor(index, alpha) {
+	switch (colorMod) {
+		case CM_NONE:
+			return COL_BLACK;
+		case CM_INDIV:
+			return colors[index];
+		default: 
+			return COL_BLACK;
+		/*case CM_SINGLE:
+			return color(255,120,0);*/
 	}
 }
