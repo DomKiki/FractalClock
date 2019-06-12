@@ -10,9 +10,9 @@ var canvas, center;
 
 var tree, angles, time = { h: 0, m: 0, s: 0 };
 
-var sizes  = [100, 180, 200],
-	colors = ["#FF0000", "#66FF00", "#0066FF"],
-	clockRadius = 250,
+var colors = ["#FF0000", "#66FF00", "#0066FF"],
+	backgroundColor,
+	clockRadius = 150,
 	showClock   = true;
 
 var shrink   = 0.67,
@@ -27,8 +27,10 @@ var ctrl, gui,
 
 function setup() {
 
-	canvas = createCanvas(800, 800);
+	canvas = createCanvas(1200, 800);
+	canvas.parent("canvasDiv");
 	center = createVector(width/2, height/2);
+	backgroundColor = color("#e6ffff");
 
 	initTree();
 	initGUI();
@@ -40,7 +42,7 @@ function setup() {
 
 function draw() {
 
-	background(255);
+	background(backgroundColor);
 
 	if (showClock)
 		drawClock();
@@ -52,7 +54,7 @@ function draw() {
 	for (let i = 0; i < tree.length; i++) {
 		push();
 			rotate(angles[i]);
-			branch(i, sizes[i], getColor(i));
+			branch(i, tree[i].getDir().mag(), getColor(i));
 		pop();
 	}
 }
@@ -60,9 +62,11 @@ function draw() {
 /************************* Tree **********************/
 
 function initTree() {
-	tree = [ new Hand(createVector(width/2, height/2 - 100)),
-			 new Hand(createVector(width/2, height/2 - 180)),
-			 new Hand(createVector(width/2, height/2 - 200)) ];
+	tree = [ new Hand(createVector(center.x, center.y - (clockRadius - 80))),
+			 new Hand(createVector(center.x, center.y - (clockRadius - 50))),
+			 new Hand(createVector(center.x, center.y - (clockRadius - 30))) ];
+	for (let i of tree)
+		console.log(i.getDir().mag());
 }
 
 function branch(index, len, col) {
